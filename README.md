@@ -347,6 +347,79 @@ java -jar target/url-shortener-0.0.1-SNAPSHOT.jar
 
 ---
 
+## Screenshots
+
+### Web Interface
+
+**Homepage - URL Shortening Dashboard**
+```
+[Screenshot: Main page with URL input field and Generate button]
+```
+
+**Features Shown:**
+- URL input field with placeholder text
+- Generate button for shortening URLs
+- Result section displaying short URL with copy functionality
+- Redirect test section
+- Click analytics section
+
+### API Examples
+
+**POST Request - Shorten URL**
+```
+[Screenshot: Postman POST request to /api/urls/shorten]
+```
+
+**GET Request - Redirect**
+```
+[Screenshot: Browser showing redirect functionality]
+```
+
+**Analytics Response**
+```
+[Screenshot: Analytics data with click count and timestamps]
+```
+
+### Database Structure
+
+**H2 Console**
+```
+[Screenshot: H2 database console showing url_mapping table]
+```
+
+---
+
+## Screenshots Directory
+
+To add screenshots to this README:
+
+1. **Create screenshots folder:**
+   ```bash
+   mkdir screenshots
+   ```
+
+2. **Add screenshots:**
+   - `screenshots/homepage.png` - Main web interface
+   - `screenshots/api-request.png` - Postman API request
+   - `screenshots/api-response.png` - API response example
+   - `screenshots/analytics.png` - Analytics dashboard
+   - `screenshots/h2-console.png` - Database structure
+
+3. **Update README with image links:**
+   ```markdown
+   ![Homepage](screenshots/homepage.png)
+   ![API Request](screenshots/api-request.png)
+   ```
+
+4. **Commit screenshots:**
+   ```bash
+   git add screenshots/
+   git commit -m "Add project screenshots"
+   git push origin main
+   ```
+
+---
+
 ## Postman Collection
 
 Import the provided Postman collection for API testing:
