@@ -1,170 +1,450 @@
 # URL Shortener
 
-A Spring Boot and MySQL URL Shortener with REST APIs, click tracking, validation, global exception handling, a simple frontend, Postman examples, and project documentation.
+## Project Overview
 
-## Run Locally
+A **Spring Boot-based URL Shortener** system that converts long URLs into compact, unique short links and provides redirect and analytics capabilities. Similar to real-world services like Bit.ly and TinyURL, this project demonstrates core backend engineering concepts including REST APIs, database design, scalability, and performance optimization.
 
-### Easiest: H2 In-Memory Database (No Setup Required!)
+### Why URL Shortening Matters
 
-This is the quickest way to get started without installing any database:
+URL shortening is critical in modern backend systems for:
+- **Scalability**: Handling millions of redirects efficiently with minimal storage
+- **Analytics**: Tracking user engagement, click patterns, and traffic sources
+- **User Experience**: Sharing short, memorable links across platforms
+- **Resource Optimization**: Reducing bandwidth usage in data-constrained environments
+
+Real-world applications include social media link sharing, QR codes, marketing campaigns, and API response optimization.
+
+---
+
+## Features
+
+✅ **Generate Short URLs** - Convert any long URL into a 7-character unique short code  
+✅ **Redirect to Original URLs** - Fast redirect mechanism with click tracking  
+✅ **Unique Short Code Generation** - Collision-resistant algorithm with fallback retry logic  
+✅ **Click Count Tracking** - Track every redirect and generate analytics  
+✅ **REST API Support** - Full-featured REST endpoints for all operations  
+✅ **Database Persistence** - Supports MySQL, H2 (in-memory), and Docker deployments  
+✅ **Global Exception Handling** - Centralized error management with meaningful error responses  
+✅ **Responsive Frontend** - Simple web interface for testing and interaction  
+
+---
+
+## Backend Concepts Used
+
+| Concept | Implementation |
+|---------|-----------------|
+| **REST APIs** | POST/GET endpoints following REST conventions |
+| **Spring Boot** | Dependency injection, auto-configuration, embedded Tomcat |
+| **Layered Architecture** | Controller → Service → Repository → Database pattern |
+| **Hashing & Encoding** | Base62 encoding for short code generation |
+| **Database Integration** | Spring Data JPA with Hibernate ORM |
+| **API Routing** | Spring routing with path variables and request mapping |
+| **Transaction Management** | @Transactional annotations for data consistency |
+
+---
+
+## System Design Concepts
+
+- **URL Mapping Pattern**: One-to-one mapping between short codes and original URLs
+- **Redirect Handling**: HTTP 302 redirects for flexibility and tracking
+- **Scalability Basics**: Stateless service design for horizontal scaling
+- **Database Indexing**: Indexed short codes and long URLs for O(1) lookups
+- **Caching Concepts**: Potential for Redis caching to reduce database hits
+- **Idempotency**: Same long URL returns same short code (no duplicate mappings)
+
+---
+
+## Project Architecture
+
+```
+┌─────────────────┐
+│   Client/UI     │
+└────────┬────────┘
+         │ HTTP Requests
+         ↓
+┌─────────────────────────┐
+│   UrlController         │  → REST API Layer
+│  (Request Handler)      │
+└────────┬────────────────┘
+         │ Delegate
+         ↓
+┌─────────────────────────┐
+│   UrlService            │  → Business Logic Layer
+│   (Core Logic)          │
+└────────┬────────────────┘
+         │ Query/Save
+         ↓
+┌─────────────────────────┐
+│   Repository            │  → Data Access Layer
+│   (JPA Interface)       │
+└────────┬────────────────┘
+         │ Execute
+         ↓
+┌─────────────────────────┐
+│   Database              │  → Persistence Layer
+│   (MySQL / H2)          │
+└─────────────────────────┘
+```
+
+---
+
+## How It Works
+
+### 1. **URL Shortening Process**
+- User submits a long URL via REST API
+- Service checks if URL already exists in database (idempotency)
+- If new, generates a unique 7-character short code using Base62 encoding
+- Stores mapping in database (shortCode → originalURL)
+- Returns short URL to client
+
+### 2. **Short Code Generation**
+- Uses `ShortCodeGenerator` for random Base62 encoding
+- Generates codes like: `abc123d`, `xyz9876`, etc.
+- Retry logic prevents collision (max 10 attempts)
+- Time-based uniqueness for distributed systems
+
+### 3. **Redirect Mechanism**
+- User clicks short link or makes GET request
+- System finds original URL in database (O(1) index lookup)
+- Increments click counter in single transaction
+- Returns HTTP 302 redirect to original URL
+- Click tracking captured for analytics
+
+### 4. **Click Analytics**
+- Every redirect increments click counter
+- Tracks creation date and last access time
+- Calculates total clicks per short URL
+- Useful for marketing attribution and user behavior analysis
+
+---
+
+## Sample API Flow
+
+### Example: Shortening a URL
+
+**Request:**
+```bash
+POST /api/urls/shorten
+Content-Type: application/json
+
+{
+  "longUrl": "https://www.github.com/dushyanthreddyvk/url-shortener"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Short URL generated successfully",
+  "data": {
+    "shortCode": "abc123d",
+    "shortUrl": "http://localhost:8080/abc123d",
+    "longUrl": "https://www.github.com/dushyanthreddyvk/url-shortener",
+    "clickCount": 0,
+    "createdAt": "2026-05-29T14:30:00"
+  }
+}
+```
+
+### Example: Redirecting via Short Code
+
+**Request:**
+```bash
+GET /abc123d
+```
+
+**Response:**
+- HTTP 302 Found
+- Location: https://www.github.com/dushyanthreddyvk/url-shortener
+- Click counter incremented in database
+
+### Example: Fetching Analytics
+
+**Request:**
+```bash
+GET /api/urls/abc123d/analytics
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "URL analytics fetched successfully",
+  "data": {
+    "shortCode": "abc123d",
+    "shortUrl": "http://localhost:8080/abc123d",
+    "longUrl": "https://www.github.com/dushyanthreddyvk/url-shortener",
+    "clickCount": 42,
+    "createdAt": "2026-05-29T14:30:00",
+    "lastAccessedAt": "2026-05-29T15:45:30"
+  }
+}
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| **POST** | `/api/urls/shorten` | Generate short URL | `{ "longUrl": "..." }` |
+| **GET** | `/{shortCode}` | Redirect to original URL | N/A |
+| **GET** | `/api/urls/{shortCode}` | Fetch URL details | N/A |
+| **GET** | `/api/urls/{shortCode}/analytics` | Fetch click analytics | N/A |
+
+**Status Codes:**
+- `201 Created` - Short URL successfully generated
+- `200 OK` - Request successful
+- `404 Not Found` - Short code does not exist
+- `400 Bad Request` - Invalid input
+
+---
+
+## Database Design
+
+### URL Mapping Table
+
+```sql
+CREATE TABLE url_mapping (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  short_code VARCHAR(10) UNIQUE NOT NULL,      -- Index for fast lookups
+  long_url LONGTEXT NOT NULL,                   -- Original URL
+  click_count BIGINT DEFAULT 0,                 -- Analytics tracking
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_accessed_at TIMESTAMP,
+  INDEX idx_short_code (short_code),
+  INDEX idx_long_url (long_url(100))
+);
+```
+
+### Key Design Decisions
+
+- **short_code**: 7-character unique identifier (index for O(1) redirect)
+- **long_url**: Stored as LONGTEXT to support arbitrary URLs
+- **click_count**: Incremented atomically on each access
+- **Timestamps**: Track creation and usage patterns
+- **Indexes**: Enable fast lookups and prevent duplicate short codes
+
+---
+
+## Technologies Used
+
+| Technology | Purpose | Version |
+|-----------|---------|---------|
+| **Java** | Programming Language | 17+ |
+| **Spring Boot** | Web Framework | 3.3.5 |
+| **Spring Data JPA** | ORM & Database Abstraction | 3.3.5 |
+| **MySQL** | Production Database | 8.0+ |
+| **H2** | In-Memory Testing Database | 2.2+ |
+| **Maven** | Build & Dependency Management | 3.8+ |
+| **Tomcat** | Web Server | 10.1+ (Embedded) |
+| **Jakarta** | Java Enterprise APIs | 10.0+ |
+
+---
+
+## Project Structure
+
+```
+url-shortener/
+├── src/main/java/com/urlshortener/
+│   ├── UrlShortenerApplication.java     # Spring Boot entry point
+│   ├── config/
+│   │   └── AppProperties.java           # Configuration properties
+│   ├── controller/
+│   │   └── UrlController.java           # REST API endpoints
+│   ├── service/
+│   │   ├── UrlService.java              # Service interface
+│   │   ├── UrlServiceImpl.java           # Core business logic
+│   │   └── ShortCodeGenerator.java      # Short code generation
+│   ├── repository/
+│   │   └── UrlMappingRepository.java    # Data access layer
+│   ├── model/
+│   │   └── UrlMapping.java              # Entity model
+│   ├── dto/
+│   │   ├── ShortenUrlRequest.java       # API request DTO
+│   │   ├── UrlResponse.java             # API response DTO
+│   │   ├── UrlAnalyticsResponse.java    # Analytics response DTO
+│   │   ├── ApiResponse.java             # Generic API response wrapper
+│   │   └── ErrorResponse.java           # Error response DTO
+│   └── exception/
+│       ├── UrlNotFoundException.java     # Custom exception
+│       └── GlobalExceptionHandler.java  # Centralized error handling
+│
+├── src/main/resources/
+│   ├── application.properties           # Default MySQL config
+│   ├── application-h2.properties        # H2 in-memory config
+│   ├── application-docker.properties    # Docker MySQL config
+│   └── static/
+│       ├── index.html                   # Frontend UI
+│       ├── script.js                    # Frontend JavaScript
+│       └── styles.css                   # Frontend styles
+│
+├── src/test/java/
+│   └── com/urlshortener/service/
+│       └── UrlServiceImplTest.java      # Unit tests
+│
+├── pom.xml                              # Maven configuration
+├── docker-compose.yml                   # Docker MySQL setup
+└── README.md                            # This file
+```
+
+---
+
+## How to Run
+
+### Option 1: H2 In-Memory Database (Fastest - No Setup Required)
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"
 ```
 
-Then open: http://localhost:8080
+Then open: **http://localhost:8080**
 
 **H2 Features:**
 - No database installation needed
 - Data persists in memory during this session
 - Resets on app restart
-- H2 Console at: http://localhost:8080/h2-console (User: `sa`, Password: empty)
+- H2 Console: http://localhost:8080/h2-console (User: `sa`, Password: empty)
 
-### Docker MySQL
-
-1. Start the project MySQL container:
+### Option 2: Docker MySQL (Production-like Setup)
 
 ```bash
+# Start MySQL container
 docker compose up -d
+
+# Start Spring Boot app
+APP_BASE_URL=http://localhost:8080 mvn spring-boot:run -Dspring-boot.run.profiles=docker
 ```
 
-2. Start the Spring Boot app with the Docker profile:
+Then open: **http://localhost:8080**
+
+Docker MySQL Configuration:
+- Port: 3307
+- Database: `url_shortener_db`
+- Username: `urluser`
+- Password: `urlpass`
+
+### Option 3: Local MySQL
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=docker
-```
-
-3. Open:
-
-```text
-http://localhost:8080
-```
-
-The Docker profile uses:
-
-```text
-MySQL port: 3307
-Database: url_shortener_db
-Username: urluser
-Password: urlpass
-```
-
-### Existing Local MySQL
-
-1. Start MySQL.
-
-On macOS with Homebrew:
-
-```bash
+# Start MySQL (macOS with Homebrew)
 brew services start mysql
+
+# Run with credentials
+APP_BASE_URL=http://localhost:8080 MYSQL_USERNAME=root MYSQL_PASSWORD=your_password mvn spring-boot:run
 ```
 
-If you installed MySQL with Docker Desktop instead, open Docker Desktop first and use the Docker section above.
-
-2. Run with your MySQL credentials:
+### Option 4: Build & Run JAR
 
 ```bash
-MYSQL_USERNAME=root MYSQL_PASSWORD=your_password mvn spring-boot:run
+# Build
+mvn clean package
+
+# Run
+java -jar target/url-shortener-0.0.1-SNAPSHOT.jar
 ```
 
-If your local MySQL `root` user has no password, run:
+---
 
-```bash
-mvn spring-boot:run
-```
+## Postman Collection
 
-If you use a custom database URL:
+Import the provided Postman collection for API testing:
+- File: `postman/URL-Shortener.postman_collection.json`
+- Contains pre-configured requests for all endpoints
 
-```bash
-MYSQL_URL='jdbc:mysql://localhost:3306/url_shortener_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC' \
-MYSQL_USERNAME=root \
-MYSQL_PASSWORD=your_password \
-mvn spring-boot:run
-```
-
-The configured MySQL user must have permission to create `url_shortener_db`, or create it manually first:
-
-```sql
-CREATE DATABASE url_shortener_db;
-```
-
-Recommended local project user:
-
-```sql
-CREATE USER 'urluser'@'localhost' IDENTIFIED BY 'urlpass';
-GRANT ALL PRIVILEGES ON url_shortener_db.* TO 'urluser'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-Then run:
-
-```bash
-MYSQL_USERNAME=urluser MYSQL_PASSWORD=urlpass mvn spring-boot:run
-```
-
-Then open:
-
-```text
-http://localhost:8080
-```
-
-The app creates tables automatically with Spring Data JPA.
+---
 
 ## Troubleshooting
 
 ### Docker not running
-
-If you get an error about Docker daemon not running:
-
-```text
-failed to connect to the docker API
-```
-
-Either:
-1. **Install and start Docker Desktop** from https://www.docker.com/products/docker-desktop
-2. **OR use the H2 profile instead** (recommended for quick testing):
-   ```bash
-   mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"
-   ```
-
-### If startup fails with:
-
-```text
-Access denied for user 'root'@'localhost'
-```
-
-the MySQL username or password is wrong. Run with the correct environment variables:
-
 ```bash
-MYSQL_USERNAME=your_user MYSQL_PASSWORD=your_password mvn spring-boot:run
+# Use H2 instead
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"
 ```
 
-### If startup fails with:
-
-```text
-Communications link failure
-```
-
-MySQL is not running or is not listening on the configured port. Either:
-1. Start MySQL: `brew services start mysql`
-2. Or use H2: `mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"`
-
-### If Docker fails with:
-
-```text
-Cannot connect to the Docker daemon
-```
-
-open Docker Desktop first, wait until it says Docker is running, then run:
-
+### MySQL connection error
 ```bash
-docker compose up -d
-mvn spring-boot:run -Dspring-boot.run.profiles=docker
+# Start MySQL
+brew services start mysql
+
+# Or use H2 profile
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"
 ```
 
-## Main APIs
+### Short URL shows localhost instead of domain
+```bash
+# Set APP_BASE_URL when running
+APP_BASE_URL=http://localhost:8080 mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=h2"
+```
 
-- `POST /api/urls/shorten`
-- `GET /{shortCode}`
-- `GET /api/urls/{shortCode}`
-- `GET /api/urls/{shortCode}/analytics`
+---
+
+## Future Improvements
+
+### Performance & Scalability
+- **Redis Caching**: Cache frequently accessed URLs to reduce database queries
+- **Connection Pooling**: Optimize database connection management
+- **Read Replicas**: Distribute read-heavy operations across multiple databases
+- **Asynchronous Processing**: Queue analytics updates for high-traffic scenarios
+
+### Feature Enhancements
+- **Custom Aliases**: Allow users to set custom short codes
+- **URL Expiration**: Set TTL for short URLs
+- **Rate Limiting**: Prevent abuse with per-IP request limits
+- **User Authentication**: Track URLs per user
+- **Batch Operations**: Shorten multiple URLs in one request
+- **URL Validation**: Verify URL accessibility before shortening
+
+### Observability & Security
+- **Structured Logging**: ELK stack integration for centralized logging
+- **Metrics & Monitoring**: Prometheus metrics for system health
+- **Security**: HTTPS, CORS configuration, input sanitization
+- **API Versioning**: Support multiple API versions for backward compatibility
+- **Rate Limiting**: Prevent abuse and DDoS attacks
+
+### Deployment & Infrastructure
+- **Docker Containerization**: Production-ready Docker images
+- **Kubernetes Orchestration**: Deploy across multiple pods
+- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+- **Analytics Dashboard**: Real-time visualization of click data
+- **Admin Panel**: Manage URLs, view statistics, user management
+
+---
+
+## Key Learning Outcomes
+
+This project demonstrates:
+
+✅ **REST API Design** - Proper endpoint design, HTTP status codes, request/response handling  
+✅ **Layered Architecture** - Clean separation of concerns (Controller → Service → Repository)  
+✅ **Database Design** - Indexing strategies, normalization, query optimization  
+✅ **Transaction Management** - ACID properties and data consistency  
+✅ **Exception Handling** - Custom exceptions and global error handling  
+✅ **Spring Boot Best Practices** - Dependency injection, configuration management  
+✅ **System Design** - Scalability, performance, and reliability considerations  
+✅ **Backend Engineering** - Production-ready code patterns and practices  
+
+---
+
+## Conclusion
+
+The URL Shortener project is a comprehensive backend system that demonstrates core software engineering principles. It showcases how real-world services like Bit.ly handle URL shortening at scale with features like click tracking, database optimization, and REST API design.
+
+This project is ideal for:
+- **Portfolio Building**: Demonstrating backend engineering skills
+- **Interview Preparation**: Understanding system design and architecture
+- **Learning**: Practical experience with Spring Boot, MySQL, and REST APIs
+- **Production Deployment**: Can be extended for real-world applications
+
+---
+
+## License
+
+This project is open-source and available under the MIT License.
+
+## Author
+
+**Dushyanth Reddy V K**  
+GitHub: [@dushyanthreddyvk](https://github.com/dushyanthreddyvk)  
+Project: [url-shortener](https://github.com/dushyanthreddyvk/url-shortener)
