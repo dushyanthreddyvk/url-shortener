@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: url-shortener-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: url_shortener_db
+      MYSQL_USER: urluser
+      MYSQL_PASSWORD: urlpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uurluser", "-purlpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:

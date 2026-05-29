@@ -1,0 +1,131 @@
+{
+  "info": {
+    "name": "URL Shortener API",
+    "description": "Postman examples for the Spring Boot URL Shortener project.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "shortCode",
+      "value": "replace_with_generated_code"
+    }
+  ],
+  "item": [
+    {
+      "name": "Shorten URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"longUrl\": \"https://spring.io/projects/spring-boot\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/urls/shorten",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "urls",
+            "shorten"
+          ]
+        },
+        "description": "Creates or returns an existing short URL for a long URL."
+      }
+    },
+    {
+      "name": "Get URL Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/urls/{{shortCode}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "urls",
+            "{{shortCode}}"
+          ]
+        },
+        "description": "Fetches long URL, short URL, short code, creation time, and click count."
+      }
+    },
+    {
+      "name": "Get Analytics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/urls/{{shortCode}}/analytics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "urls",
+            "{{shortCode}}",
+            "analytics"
+          ]
+        },
+        "description": "Returns click analytics for a short URL."
+      }
+    },
+    {
+      "name": "Redirect",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/{{shortCode}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "{{shortCode}}"
+          ]
+        },
+        "description": "Redirects to the original long URL and increments the click count."
+      }
+    },
+    {
+      "name": "Validation Error Example",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"longUrl\": \"example.com/no-protocol\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/urls/shorten",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "urls",
+            "shorten"
+          ]
+        },
+        "description": "Shows the structured JSON validation error response."
+      }
+    }
+  ]
+}
