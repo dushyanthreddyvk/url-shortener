@@ -391,32 +391,10 @@ java -jar target/url-shortener-0.0.1-SNAPSHOT.jar
 
 ## Screenshots Directory
 
-To add screenshots to this README:
+<img width="1470" height="956" alt="Screenshot 2026-05-29 at 2 34 37 PM" src="https://github.com/user-attachments/assets/8262a320-3654-487d-9f6c-1c75b773bfa4" />
 
-1. **Create screenshots folder:**
-   ```bash
-   mkdir screenshots
-   ```
+<img width="1470" height="956" alt="Screenshot 2026-05-29 at 2 34 48 PM" src="https://github.com/user-attachments/assets/f3185c40-f0f3-44ed-a282-4ba45ad4cf64" />
 
-2. **Add screenshots:**
-   - `screenshots/homepage.png` - Main web interface
-   - `screenshots/api-request.png` - Postman API request
-   - `screenshots/api-response.png` - API response example
-   - `screenshots/analytics.png` - Analytics dashboard
-   - `screenshots/h2-console.png` - Database structure
-
-3. **Update README with image links:**
-   ```markdown
-   ![Homepage](screenshots/homepage.png)
-   ![API Request](screenshots/api-request.png)
-   ```
-
-4. **Commit screenshots:**
-   ```bash
-   git add screenshots/
-   git commit -m "Add project screenshots"
-   git push origin main
-   ```
 
 ---
 
